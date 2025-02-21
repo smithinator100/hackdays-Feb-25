@@ -1,4 +1,79 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('privacy-modal');
+    let activeBlock = null;
+    let inputFieldAnimation = null;
+
+    // Initialize input field animation
+    const inputFieldContainer = modal.querySelector('.input-field-animation');
+    if (inputFieldContainer) {
+        inputFieldAnimation = lottie.loadAnimation({
+            container: inputFieldContainer,
+            renderer: 'svg',
+            loop: false,
+            autoplay: false,
+            path: 'lottie/input-field.json'
+        });
+
+        // Add event listeners for animation
+        inputFieldAnimation.addEventListener('complete', () => {
+            if (modal.classList.contains('show')) {
+                inputFieldAnimation.goToAndPlay(0);
+            }
+        });
+    }
+
+    // Function to position and show modal
+    function showModal(block) {
+        const rect = block.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        modal.style.left = (rect.left + 24) + 'px';
+        modal.style.top = (rect.bottom + scrollTop - 12) + 'px'; // 12px overlap from bottom edge
+        modal.classList.add('show');
+        activeBlock = block;
+
+        // Play input field animation
+        if (inputFieldAnimation) {
+            inputFieldAnimation.goToAndPlay(0);
+        }
+    }
+
+    // Function to update modal position
+    function updateModalPosition() {
+        if (activeBlock && modal.classList.contains('show')) {
+            const rect = activeBlock.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            modal.style.left = (rect.left + 24) + 'px';
+            modal.style.top = (rect.bottom + scrollTop - 12) + 'px';
+        }
+    }
+
+    // Add resize event listener
+    window.addEventListener('resize', updateModalPosition);
+
+    // Function to hide modal
+    function hideModal() {
+        modal.classList.remove('show');
+        activeBlock = null;
+        
+        // Stop input field animation
+        if (inputFieldAnimation) {
+            try {
+                inputFieldAnimation.stop();
+            } catch (error) {
+                console.error('Error stopping Lottie animation:', error);
+            }
+        }
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!modal.contains(e.target) && !e.target.closest('.block')) {
+            hideModal();
+        }
+    });
+
     // Initialize all blocks
     document.querySelectorAll('.block').forEach((block, index) => {
         const shieldElement = block.querySelector('.shield');
@@ -8,6 +83,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const linkElement = block.querySelector('.link');
         const underlineContainer = block.querySelector('.underline-animation');
         let isHovered = false;
+
+        // Add click handler for modal
+        block.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (activeBlock === block) {
+                hideModal();
+            } else {
+                showModal(block);
+            }
+        });
 
         // Initialize underline animation
         let underlineAnimation;
